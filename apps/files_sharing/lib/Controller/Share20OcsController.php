@@ -531,6 +531,18 @@ class Share20OcsController extends OCSController {
 			if (($stateFilter === null || $share->getState() === $stateFilter) &&
 				$this->canAccessShare($share)) {
 				try {
+					/**
+					 * Check if the group to which the user belongs is not allowed
+					 * to reshare
+					 */
+					$excludeGroupList = \json_decode($this->config->getAppValue('core', 'shareapi_exclude_groups_list', '[]'));
+					foreach ($excludeGroupList as $groupName) {
+						if ($this->groupManager->get($groupName)->inGroup($this->currentUser) === true) {
+							//Read only share
+							$share->setPermissions(\OCP\Constants::PERMISSION_READ);
+							break;
+						}
+					}
 					$formatted[] = $this->formatShare($share, true);
 				} catch (NotFoundException $e) {
 					// Ignore this share
